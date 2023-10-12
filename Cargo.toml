@@ -9,3 +9,4 @@ edition = "2021"
 openssl = "0.10.38"
 openssl-sys = "0.9.93"
 inquire = "0.6.1"
+tokio = { version = "1.33.0", features = ["full"] }
