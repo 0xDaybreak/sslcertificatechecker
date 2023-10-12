@@ -1,6 +1,9 @@
 mod client;
 mod server;
+
+use std::net::TcpStream;
 use inquire::Select;
+use openssl::ssl::SslStream;
 
 
 fn main() {
