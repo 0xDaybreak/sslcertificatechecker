@@ -25,14 +25,13 @@ pub(crate) async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                print!("buf is {:?}", buf);
-
                 if buf[0] == 49 {
-                        let domain = "google.com:443";
+                        socket.read(&mut buf).await;
+                        let domain = std::str::from_utf8(&buf).unwrap();
+                        let trimmed_domain = domain.trim_matches(char::from(0));
                         let connector = SslConnector::builder(SslMethod::tls()).unwrap().build();
-
-                        let stream = TcpStream::connect(domain).unwrap();
-                        let stream = connector.connect("google.com", stream).unwrap();
+                        let stream = TcpStream::connect((trimmed_domain, 443)).unwrap();
+                        let stream = connector.connect(trimmed_domain, stream).unwrap();
                         let ssl_reply = extract_ssl_cert(stream);
                         println!("{:?}", ssl_reply);
 

@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use inquire::Select;
+use inquire::{Select, Text};
 use tokio::net::TcpStream;
 #[tokio::main]
 pub(crate) async fn start_client() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,6 +14,13 @@ pub(crate) async fn start_client() -> Result<(), Box<dyn std::error::Error>> {
             "GET_SSL_CERTIFICATE" => {
                 buf[0] = 49;
                 socket.write_all(&buf[0..1]).await?;
+
+                let status = Text::new("What is the domain you would like to get the ssl certificate for?")
+                    .prompt().unwrap();
+                let status_bytes = status.as_bytes();
+                let copy_length = std::cmp::min(status_bytes.len(), buf.len());
+                buf[0..copy_length].copy_from_slice(&status_bytes[0..copy_length]);
+                socket.write_all(&buf).await;
 
                 let n = socket.read(&mut buf).await?;
                 if n > 0 {
