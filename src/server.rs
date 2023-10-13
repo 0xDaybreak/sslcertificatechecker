@@ -1,13 +1,15 @@
 use openssl::ssl::{SslConnector, SslMethod, SslStream};
-use openssl::x509::{X509NameRef, X509};
 use std::net::TcpStream;
-use std::ops::Add;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
+use inquire::{Text};
 
 #[tokio::main]
 pub(crate) async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+
+    let listen_address = Text::new("Please enter the address and the port the server should listen to: ").prompt().unwrap();
+    println!("Now listening on {}", listen_address);
+    let listener = TcpListener::bind(listen_address).await?;
 
     loop {
         let (mut socket, addr) = listener.accept().await?;
@@ -49,7 +51,6 @@ pub(crate) async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
                                     .copy_from_slice(stream.to_string().into_bytes().as_slice());
                                 socket.write_all(&mut buf).await.unwrap();
                             }
-                            _ => {}
                         }
                     }
                     _ => {}
