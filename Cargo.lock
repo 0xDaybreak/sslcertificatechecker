@@ -393,6 +393,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sslcert"
+version = "0.1.0"
+dependencies = [
+ "inquire",
+ "openssl",
+ "openssl-sys",
+ "tokio",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -470,16 +480,6 @@ name = "unicode-width"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
-
-[[package]]
-name = "untitled"
-version = "0.1.0"
-dependencies = [
- "inquire",
- "openssl",
- "openssl-sys",
- "tokio",
-]
 
 [[package]]
 name = "vcpkg"

@@ -1,5 +1,5 @@
 use openssl::ssl::{SslConnector, SslMethod, SslStream};
-use openssl::x509::{X509, X509NameRef};
+use openssl::x509::{X509NameRef, X509};
 use std::net::TcpStream;
 use std::ops::Add;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -25,27 +25,33 @@ pub(crate) async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                match buf[0]  {
+                match buf[0] {
                     49 => {
                         socket.read(&mut buf).await;
                         let domain = std::str::from_utf8(&buf).unwrap();
                         let trimmed_domain = domain.trim_matches(char::from(0));
                         let connector = SslConnector::builder(SslMethod::tls()).unwrap().build();
-                        let stream = TcpStream::connect((trimmed_domain, 443)).unwrap();
-                        let stream = connector.connect(trimmed_domain, stream).unwrap();
-                        buf.iter_mut().for_each(|m| *m = 0);
-                        let ssl_reply = extract_ssl_cert(stream).unwrap();
-                        if ssl_reply.len() <= buf.len() {
-                            buf[0..ssl_reply.len()].copy_from_slice(&ssl_reply);
+                        let stream = TcpStream::connect((trimmed_domain, 443));
+                        match stream {
+                            Ok(stream) => {
+                                let stream = connector.connect(trimmed_domain, stream).unwrap();
+                                buf.iter_mut().for_each(|m| *m = 0);
+                                let ssl_reply = extract_ssl_cert(stream).unwrap();
+
+                                if ssl_reply.len() <= buf.len() {
+                                    buf[0..ssl_reply.len()].copy_from_slice(&ssl_reply);
+                                }
+                                println!("Sent to {} the following data {:?}", addr, buf);
+                                socket.write_all(&mut buf).await.unwrap();
+                            }
+                            Err(stream) => {
+                                buf[0..stream.to_string().len()]
+                                    .copy_from_slice(stream.to_string().into_bytes().as_slice());
+                                socket.write_all(&mut buf).await.unwrap();
+                            }
+                            _ => {}
                         }
-                        println!("Sent to {} the following data {:?}", addr, buf);
-
-                        socket.write_all(&mut buf).await.unwrap();
                     }
-                    50 => {
-
-                    }
-
                     _ => {}
                 }
             }
