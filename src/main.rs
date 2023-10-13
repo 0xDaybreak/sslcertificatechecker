@@ -1,10 +1,8 @@
 mod client;
+
 mod server;
 
-use std::net::TcpStream;
 use inquire::Select;
-use openssl::ssl::SslStream;
-
 
 fn main() {
     let items: [String; 2] = ["START AS CLIENT".to_string(), "START AS SERVER".to_string()];
