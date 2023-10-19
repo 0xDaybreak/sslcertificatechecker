@@ -36,19 +36,28 @@ pub(crate) async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
                         let stream = TcpStream::connect((trimmed_domain, 443));
                         match stream {
                             Ok(stream) => {
-                                let stream = connector.connect(trimmed_domain, stream).unwrap();
-                                buf.iter_mut().for_each(|m| *m = 0);
-                                let ssl_reply = extract_ssl_cert(stream).unwrap();
-
-                                if ssl_reply.len() <= buf.len() {
-                                    buf[0..ssl_reply.len()].copy_from_slice(&ssl_reply);
+                                let stream = connector.connect(trimmed_domain, stream);
+                                match stream {
+                                    Ok(stream) => {
+                                        let ssl_reply = extract_ssl_cert(stream).unwrap();
+                                        if ssl_reply.len() <= buf.len() {
+                                            buf[0..ssl_reply.len()].copy_from_slice(&ssl_reply);
+                                        }
+                                        println!("Sent to {} the following data {:?}", addr, buf);
+                                        socket.write_all(&mut buf).await.unwrap();
+                                    }
+                                    Err(err) => {
+                                        let error_message = err.to_string();
+                                        let error_bytes = error_message.as_bytes();
+                                        buf[0..error_bytes.len()].copy_from_slice(error_bytes);
+                                        socket.write_all(&mut buf).await.unwrap();
+                                    }
                                 }
-                                println!("Sent to {} the following data {:?}", addr, buf);
-                                socket.write_all(&mut buf).await.unwrap();
                             }
-                            Err(stream) => {
-                                buf[0..stream.to_string().len()]
-                                    .copy_from_slice(stream.to_string().into_bytes().as_slice());
+                            Err(err) => {
+                                let error_message = err.to_string();
+                                let error_bytes = error_message.as_bytes();
+                                buf[0..error_bytes.len()].copy_from_slice(error_bytes);
                                 socket.write_all(&mut buf).await.unwrap();
                             }
                         }
